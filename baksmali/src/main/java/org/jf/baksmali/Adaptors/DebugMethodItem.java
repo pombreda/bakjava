@@ -49,22 +49,22 @@ public abstract class DebugMethodItem extends MethodItem {
     }
 
     protected static void writeLine(IndentingWriter writer, int line) throws IOException {
-        writer.write(".line ");
+        writer.write("// line ");
         writer.printSignedIntAsDec(line);
     }
 
     protected static void writeEndPrologue(IndentingWriter writer) throws IOException {
-        writer.write(".prologue");
+        writer.write("// prologue");
     }
 
     protected static void writeBeginEpilogue(IndentingWriter writer) throws IOException {
-        writer.write(".epilogue");
+        writer.write("// epilogue");
     }
 
     protected static void writeStartLocal(IndentingWriter writer, CodeItem codeItem, int register,
                                           StringIdItem name, TypeIdItem type, StringIdItem signature)
                                           throws IOException {
-        writer.write(".local ");
+        writer.write("// local ");
         RegisterFormatter.writeTo(writer, codeItem, register);
         writer.write(", ");
         writer.write(name.getStringValue());
@@ -79,7 +79,7 @@ public abstract class DebugMethodItem extends MethodItem {
 
     protected static void writeEndLocal(IndentingWriter writer, CodeItem codeItem, int register, StringIdItem name,
                                        TypeIdItem type, StringIdItem signature) throws IOException {
-        writer.write(".end local ");
+        writer.write("// end local ");
         RegisterFormatter.writeTo(writer, codeItem, register);
 
         if (name != null) {
@@ -99,7 +99,7 @@ public abstract class DebugMethodItem extends MethodItem {
     protected static void writeRestartLocal(IndentingWriter writer, CodeItem codeItem, int register,
                                          StringIdItem name, TypeIdItem type, StringIdItem signature)
                                          throws IOException {
-        writer.write(".restart local ");
+        writer.write("// restart local ");
         RegisterFormatter.writeTo(writer, codeItem, register);
 
         if (name != null) {
@@ -116,7 +116,7 @@ public abstract class DebugMethodItem extends MethodItem {
     }
 
     protected static void writeSetFile(IndentingWriter writer, String fileName) throws IOException {
-        writer.write(".source \"");
+        writer.write("// source \"");
         Utf8Utils.writeEscapedString(writer, fileName);
         writer.write('"');
     }
