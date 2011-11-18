@@ -126,23 +126,44 @@ public class ClassDefinition {
     }
 
     public void writeTo(IndentingWriter writer) throws IOException {
+    	writeSourceFile(writer);
         writeClass(writer);
         writeSuper(writer);
-        writeSourceFile(writer);
         writeInterfaces(writer);
         writeAnnotations(writer);
         writeStaticFields(writer);
         writeInstanceFields(writer);
         writeDirectMethods(writer);
         writeVirtualMethods(writer);
+        writer.write("\n}");
         return ;
     }
 
     private void writeClass(IndentingWriter writer) throws IOException {
-        writer.write(".class ");
-        writeAccessFlags(writer);
-        writer.write(classDefItem.getClassType().getTypeDescriptor());
-        writer.write('\n');
+    	
+    	/** 
+    	 * get class-name split it to it's packages
+    	 * NOTE: the last index will contain the class-name
+    	 */
+    	String desc = classDefItem.getClassType().getTypeDescriptor();
+    	desc = desc.substring(1, desc.length()-1);
+    	String[] descArray = desc.split("/");
+    	
+    	/** build package-name in java-style */
+    	String packageName = "";
+    	for(int i=0; i<descArray.length-1; i++) {
+    		if(i!=0) packageName+=".";
+    		packageName+= descArray[i];
+    	}
+
+    	/** write package-name */
+    	writer.write("package "+packageName+";\n\n");
+        
+    	/** write access-flags */
+    	writeAccessFlags(writer);
+    	
+    	/** write class-name */
+        writer.write("class "+descArray[descArray.length-1]+" ");
     }
 
     private void writeAccessFlags(IndentingWriter writer) throws IOException {
@@ -155,16 +176,24 @@ public class ClassDefinition {
     private void writeSuper(IndentingWriter writer) throws IOException {
         TypeIdItem superClass = classDefItem.getSuperclass();
         if (superClass != null) {
-            writer.write(".super ");
-            writer.write(superClass.getTypeDescriptor());
-            writer.write('\n');
+        	
+        	/** 
+        	 * get superclass-name and convert it to java-style
+        	 * NOTE: This will contain the package-name, too. So you don't need any imports but you have more code.
+        	 * 		 TODO: should be change in future  
+        	 */
+    	    String desc = superClass.getTypeDescriptor();
+    	    desc = desc.substring(1, desc.length()-1).replace("/",".");
+            writer.write("extends "+desc+" ");
         }
     }
 
     private void writeSourceFile(IndentingWriter writer) throws IOException {
-        StringIdItem sourceFile = classDefItem.getSourceFile();
+        
+    	/** write original filename as debug-comment */
+    	StringIdItem sourceFile = classDefItem.getSourceFile();
         if (sourceFile != null) {
-            writer.write(".source \"");
+            writer.write("// source \"");
             Utf8Utils.writeEscapedString(writer, sourceFile.getStringValue());
             writer.write("\"\n");
         }
@@ -181,12 +210,16 @@ public class ClassDefinition {
             return;
         }
 
-        writer.write('\n');
-        writer.write("# interfaces\n");
         for (TypeIdItem typeIdItem: interfaceList.getTypes()) {
-            writer.write(".implements ");
-            writer.write(typeIdItem.getTypeDescriptor());
-            writer.write('\n');
+            
+        	/** 
+        	 * get interface-name and convert it to java-style
+        	 * NOTE: This will contain the package-name, too. So you don't need any imports but you have more code.
+        	 * 		 TODO: should be change in future  
+        	 */
+            String desc = typeIdItem.getTypeDescriptor();
+            desc = desc.substring(1, desc.length()-1).replace("/",".");
+            writer.write("implements "+desc+" {\n");
         }
     }
 
@@ -202,7 +235,7 @@ public class ClassDefinition {
         }
 
         writer.write("\n\n");
-        writer.write("# annotations\n");
+        writer.write("// annotations\n");
         AnnotationFormatter.writeTo(writer, annotationSet);
     }
 
@@ -228,7 +261,7 @@ public class ClassDefinition {
         }
 
         writer.write("\n\n");
-        writer.write("# static fields\n");
+        writer.write("// static fields\n");
 
         boolean first = true;
         for (int i=0; i<encodedFields.length; i++) {
@@ -262,7 +295,7 @@ public class ClassDefinition {
         }
 
         writer.write("\n\n");
-        writer.write("# instance fields\n");
+        writer.write("// instance fields\n");
         boolean first = true;
         for (ClassDataItem.EncodedField field: classDataItem.getInstanceFields()) {
             if (!first) {
@@ -288,7 +321,7 @@ public class ClassDefinition {
         }
 
         writer.write("\n\n");
-        writer.write("# direct methods\n");
+        writer.write("// direct methods\n");
         writeMethods(writer, directMethods);
     }
 
@@ -304,7 +337,7 @@ public class ClassDefinition {
         }
 
         writer.write("\n\n");
-        writer.write("# virtual methods\n");
+        writer.write("// virtual methods\n");
         writeMethods(writer, virtualMethods);
     }
 
