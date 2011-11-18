@@ -32,6 +32,7 @@ import org.jf.baksmali.Adaptors.Format.InstructionMethodItemFactory;
 import org.jf.dexlib.Code.Analysis.SyntheticAccessorResolver;
 import org.jf.dexlib.Code.InstructionWithReference;
 import org.jf.util.IndentingWriter;
+import org.jf.baksmali.Tools;
 import org.jf.baksmali.baksmali;
 import org.jf.dexlib.*;
 import org.jf.dexlib.Code.Analysis.AnalyzedInstruction;
@@ -107,22 +108,30 @@ public class MethodDefinition {
                         AnnotationSetRefList parameterAnnotations) throws IOException {
         final CodeItem codeItem = encodedMethod.codeItem;
 
-        writer.write(".method ");
+        /** write access-flags */
         writeAccessFlags(writer, encodedMethod);
+        
+        /** write return-type as java-datatype */
+        String returnType = Tools.getJavaDataType(encodedMethod.method.getPrototype().getReturnType().getTypeDescriptor());
+        writer.write(returnType+" ");
+
+    	/** write method-name */
         writer.write(encodedMethod.method.getMethodName().getStringValue());
-        writer.write(encodedMethod.method.getPrototype().getPrototypeString());
-        writer.write('\n');
+        
+        /** write parameters */
+    	writer.write("(");
+    	writeParameters(writer, codeItem, parameterAnnotations);
+        writer.write(") {\n");
 
         writer.indent(4);
         if (codeItem != null) {
             if (baksmali.useLocalsDirective) {
-                writer.write(".locals ");
+                writer.write("// locals ");
             } else {
-                writer.write(".registers ");
+                writer.write("// registers ");
             }
             writer.printSignedIntAsDec(getRegisterCount(encodedMethod));
             writer.write('\n');
-            writeParameters(writer, codeItem, parameterAnnotations);
             if (annotationSet != null) {
                 AnnotationFormatter.writeTo(writer, annotationSet);
             }
@@ -140,7 +149,7 @@ public class MethodDefinition {
             }
         }
         writer.deindent(4);
-        writer.write(".end method\n");
+        writer.write("}\n");
     }
 
     private static int getRegisterCount(ClassDataItem.EncodedMethod encodedMethod)
@@ -164,10 +173,10 @@ public class MethodDefinition {
         }
     }
 
-    private static void writeParameters(IndentingWriter writer, CodeItem codeItem,
+    private void writeParameters(IndentingWriter writer, CodeItem codeItem,
                                         AnnotationSetRefList parameterAnnotations) throws IOException {
         DebugInfoItem debugInfoItem = null;
-        if (baksmali.outputDebugInfo && codeItem != null) {
+        if (/*baksmali.outputDebugInfo && */codeItem != null) {
             debugInfoItem = codeItem.getDebugInfo();
         }
 
@@ -192,6 +201,11 @@ public class MethodDefinition {
         if (parameterCount < parameterNames.length) {
             parameterCount = parameterNames.length;
         }
+        
+        /** get parameters and their data-types if available */
+        TypeListItem parameters = encodedMethod.method.getPrototype().getParameters();
+        List<TypeIdItem> types = null;
+    	if(parameters!=null) types = parameters.getTypes();
 
         for (int i=0; i<parameterCount; i++) {
             AnnotationSetItem annotationSet = null;
@@ -204,21 +218,25 @@ public class MethodDefinition {
                 parameterName = parameterNames[i];
             }
 
-            writer.write(".parameter");
+            /** get data-type */
+            String typeDescriptor;
+    	    if(types!=null) typeDescriptor = Tools.getJavaDataType(types.get(i).getTypeDescriptor());
+    	    else typeDescriptor = "Object";
+    	    
+    	    /** write comma if it's not the first argument */
+            if(i!=0) writer.write(", ");
+            
+    	    /** write data-type together with variable-name */
+    	    writer.write(typeDescriptor+" "+parameterName.getStringValue());
 
-            if (parameterName != null) {
-                writer.write(" \"");
-                writer.write(parameterName.getStringValue());
-                writer.write('"');
-            }
-
-            writer.write('\n');
+            /** TODO: implement annotations */
             if (annotationSet != null) {
+            	writer.write('\n');
                 writer.indent(4);
                 AnnotationFormatter.writeTo(writer, annotationSet);
                 writer.deindent(4);
 
-                writer.write(".end parameter\n");
+                writer.write("// end parameter\n");
             }
         }
     }
