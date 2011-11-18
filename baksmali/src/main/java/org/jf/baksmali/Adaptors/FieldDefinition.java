@@ -28,6 +28,7 @@
 
 package org.jf.baksmali.Adaptors;
 
+import org.jf.baksmali.Tools;
 import org.jf.baksmali.Adaptors.EncodedValue.EncodedValueAdaptor;
 import org.jf.util.IndentingWriter;
 import org.jf.dexlib.AnnotationSetItem;
@@ -58,11 +59,11 @@ public class FieldDefinition {
             writer.write("#the value of this static final field might be set in the static constructor\n");
         }
 
-        writer.write(".field ");
         writeAccessFlags(writer, encodedField);
+        writer.write(Tools.getJavaDataType(encodedField.field.getFieldType().getTypeDescriptor())+" ");
         writer.write(encodedField.field.getFieldName().getStringValue());
-        writer.write(':');
-        writer.write(encodedField.field.getFieldType().getTypeDescriptor());
+        writer.write(';');
+        
         if (initialValue != null) {
             writer.write(" = ");
             EncodedValueAdaptor.writeTo(writer, initialValue);
@@ -70,6 +71,7 @@ public class FieldDefinition {
 
         writer.write('\n');
 
+        /** TODO: convert this to java */
         if (annotationSet != null) {
             writer.indent(4);
             AnnotationFormatter.writeTo(writer, annotationSet);
