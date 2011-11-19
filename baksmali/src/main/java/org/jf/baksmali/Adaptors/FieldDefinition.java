@@ -62,14 +62,14 @@ public class FieldDefinition {
         writeAccessFlags(writer, encodedField);
         writer.write(Tools.getJavaDataType(encodedField.field.getFieldType().getTypeDescriptor())+" ");
         writer.write(encodedField.field.getFieldName().getStringValue());
-        writer.write(';');
+        
         
         if (initialValue != null) {
             writer.write(" = ");
             EncodedValueAdaptor.writeTo(writer, initialValue);
         }
 
-        writer.write('\n');
+        writer.write(";\n");
 
         /** TODO: convert this to java */
         if (annotationSet != null) {
